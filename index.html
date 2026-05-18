@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>REST Health — Télésanté Réfugiés</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; background: #0a1628; color: white; }
+
+  header {
+    background: linear-gradient(135deg, #0a1628, #1a3a5c);
+    padding: 20px;
+    text-align: center;
+    border-bottom: 3px solid #e63946;
+  }
+  header img { width: 60px; margin-bottom: 10px; }
+  header h1 { font-size: 22px; color: #ffffff; }
+  header p { font-size: 13px; color: #a0b4c8; margin-top: 5px; }
+
+  .lang-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: #e63946;
+    color: white;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+
+  .section-title {
+    text-align: center;
+    padding: 20px 15px 10px;
+    font-size: 14px;
+    color: #a0b4c8;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .branches {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    padding: 10px 15px 20px;
+  }
+
+  .branch-card {
+    background: #1a3a5c;
+    border-radius: 12px;
+    padding: 20px 10px;
+    text-align: center;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.3s;
+  }
+  .branch-card:hover, .branch-card.active {
+    border-color: #e63946;
+    background: #1f4570;
+  }
+  .branch-card .icon { font-size: 30px; margin-bottom: 8px; }
+  .branch-card h3 { font-size: 14px; color: #ffffff; }
+  .branch-card p { font-size: 11px; color: #a0b4c8; margin-top: 3px; }
+
+  .doctors-section {
+    display: none;
+    padding: 0 15px 30px;
+  }
+  .doctors-section.visible { display: block; }
+
+  .branch-header {
+    background: #1a3a5c;
+    padding: 12px 15px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .branch-header h2 { font-size: 16px; }
+  .back-btn {
+    background: #e63946;
+    color: white;
+    border: none;
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+
+  .legend {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+    font-size: 11px;
+    color: #a0b4c8;
+    flex-wrap: wrap;
+  }
+  .legend span { display: flex; align-items: center; gap: 5px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .dot.green { background: #2dc653; }
+  .dot.yellow { background: #f4a100; }
+  .dot.red { background: #e63946; }
+
+  .doctor-card {
+    background: #1a3a5c;
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+  .doctor-avatar {
+    width: 55px;
+    height: 55px;
+    border-radius: 50%;
+    background: #2a4a6c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+  .doctor-info { flex: 1; }
+  .doctor-info h3 { font-size: 14px; margin-bottom: 3px; }
+  .doctor-info p { font-size: 11px; color: #a0b4c8; }
+  .doctor-info .langs { font-size: 10px; color: #7a9ab8; margin-top: 3px; }
+
+  .status-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  .status-indicator {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+  }
+  .status-indicator.green { background: #2dc653; box-shadow: 0 0 8px #2dc653; }
+  .status-indicator.yellow { background: #f4a100; box-shadow: 0 0 8px #f4a100; }
+  .status-indicator.red { background: #e63946; }
+
+  .consult-btn {
+    background: #2dc653;
+    color: white;
+    border: none;
+    padding: 7px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    cursor: pointer;
+    margin-top: 5px;
+  }
+  .consult-btn.disabled {
+    background: #2a4a6c;
+    color: #5a7a9a;
+    cursor: not-allowed;
+  }
+
+  .stats-bar {
+    display: flex;
+    justify-content: space-around;
+    background: #1a3a5c;
+    padding: 15px;
+    margin: 0 15px 20px;
+    border-radius: 10px;
+    text-align: center;
+  }
+  .stat { font-size: 11px; color: #a0b4c8; }
+  .stat strong { display: block; font-size: 20px; color: #ffffff; margin-bottom: 3px; }
+
+  footer {
+    text-align: center;
+    padding: 20px;
+    font-size: 11px;
+    color: #5a7a9a;
+    border-top: 1px solid #1a3a5c;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <button class="lang-btn" onclick="toggleLang()">EN</button>
+  <div style="font-size:36px;">🏥</div>
+  <h1 id="title">REST Health</h1>
+  <p id="subtitle">Télésanté pour réfugiés — Uganda</p>
+</header>
+
+<div class="stats-bar">
+  <div class="stat"><strong>4</strong><span id="s1">Camps</span></div>
+  <div class="stat"><strong id="total-docs">0</strong><span id="s2">Médecins</span></div>
+  <div class="stat"><strong id="available-docs">0</strong><span id="s3">Disponibles</span></div>
+</div>
+
+<p class="section-title" id="choose-title">Choisissez votre camp</p>
+
+<!-- Branches -->
+<div class="branches" id="branches-grid">
+  <div class="branch-card" onclick="showBranch('kiaka')">
+    <div class="icon">🏕️</div>
+    <h3>Kiaka</h3>
+    <p id="k-count">3 médecins</p>
+  </div>
+  <div class="branch-card" onclick="showBranch('nakivale')">
+    <div class="icon">🏕️</div>
+    <h3>Nakivale</h3>
+    <p id="n-count">3 médecins</p>
+  </div>
+  <div class="branch-card" onclick="showBranch('kiangwali')">
+    <div class="icon">🏕️</div>
+    <h3>Kiangwali</h3>
+    <p id="kg-count">2 médecins</p>
+  </div>
+  <div class="branch-card" onclick="showBranch('kampala')">
+    <div class="icon">🏙️</div>
+    <h3>Kampala</h3>
+    <p id="kp-count">3 médecins</p>
+  </div>
+</div>
+
+<!-- Doctors Section -->
+<div class="doctors-section" id="doctors-section">
+  <div class="branch-header">
+    <h2 id="branch-title">Kiaka</h2>
+    <button class="back-btn" onclick="goBack()" id="back-text">← Retour</button>
+  </div>
+
+  <div class="legend">
+    <span><span class="dot green"></span><span id="l1">Disponible</span></span>
+    <span><span class="dot yellow"></span><span id="l2">Occupé</span></span>
+    <span><span class="dot red"></span><span id="l3">Absent</span></span>
+  </div>
+
+  <div id="doctors-list"></div>
+</div>
+
+<footer>
+  <p>REST Canada © 2026 | <a href="https://joulecal7-source.github.io/REST-Canada/REST_Canada.html" style="color:#e63946;">REST Canada</a></p>
+</footer>
+
+<script>
+const lang = { current: 'fr' };
+
+const translations = {
+  fr: {
+    title: 'REST Health',
+    subtitle: 'Télésanté pour réfugiés — Uganda',
+    s1: 'Camps', s2: 'Médecins', s3: 'Disponibles',
+    chooseTitle: 'Choisissez votre camp',
+    backText: '← Retour',
+    l1: 'Disponible', l2: 'Occupé', l3: 'Absent',
+    consult: 'Consulter',
+    busy: 'Occupé',
+    absent: 'Absent',
+    kCount: '3 médecins', nCount: '3 médecins',
+    kgCount: '2 médecins', kpCount: '3 médecins'
+  },
+  en: {
+    title: 'REST Health',
+    subtitle: 'Telehealth for Refugees — Uganda',
+    s1: 'Camps', s2: 'Doctors', s3: 'Available',
+    chooseTitle: 'Choose your camp',
+    backText: '← Back',
+    l1: 'Available', l2: 'Busy', l3: 'Absent',
+    consult: 'Consult',
+    busy: 'Busy',
+    absent: 'Absent',
+    kCount: '3 doctors', nCount: '3 doctors',
+    kgCount: '2 doctors', kpCount: '3 doctors'
+  }
+};
+
+const doctors = {
+  kiaka: [
+    { name: 'Dr. Jean Muhindo', specialty: 'Médecine générale', langs: 'Français · Swahili · Anglais', status: 'green', whatsapp: '256700000001' },
+    { name: 'Dr. Amina Zawadi', specialty: 'Pédiatrie', langs: 'Swahili · Français', status: 'yellow', whatsapp: '256700000002' },
+    { name: 'Inf. Pierre Bauma', specialty: 'Soins infirmiers', langs: 'Français · Lingala', status: 'red', whatsapp: '256700000003' },
+  ],
+  nakivale: [
+    { name: 'Dr. Grace Nakato', specialty: 'Médecine générale', langs: 'Anglais · Swahili', status: 'green', whatsapp: '256700000004' },
+    { name: 'Dr. Samuel Birungi', specialty: 'Chirurgie générale', langs: 'Anglais · Français', status: 'green', whatsapp: '256700000005' },
+    { name: 'Inf. Marie Uwase', specialty: 'Soins maternels', langs: 'Français · Kinyarwanda', status: 'red', whatsapp: '256700000006' },
+  ],
+  kiangwali: [
+    { name: 'Dr. Hassan Mugisha', specialty: 'Médecine interne', langs: 'Français · Anglais · Arabe', status: 'green', whatsapp: '256700000007' },
+    { name: 'Inf. Fatou Diallo', specialty: 'Soins infirmiers', langs: 'Français · Fula', status: 'yellow', whatsapp: '256700000008' },
+  ],
+  kampala: [
+    { name: 'Dr. Esther Kyomuhendo', specialty: 'Médecine générale', langs: 'Anglais · Swahili', status: 'green', whatsapp: '256700000009' },
+    { name: 'Dr. Olivier Ndayishimiye', specialty: 'Psychiatrie', langs: 'Français · Kirundi', status: 'green', whatsapp: '256700000010' },
+    { name: 'Inf. Consolée Mukamana', specialty: 'Soins infirmiers', langs: 'Français · Kinyarwanda', status: 'red', whatsapp: '256700000011' },
+  ]
+};
+
+function countDocs() {
+  let total = 0, available = 0;
+  Object.values(doctors).forEach(branch => {
+    branch.forEach(d => {
+      total++;
+      if (d.status === 'green') available++;
+    });
+  });
+  document.getElementById('total-docs').textContent = total;
+  document.getElementById('available-docs').textContent = available;
+}
+
+function showBranch(branch) {
+  document.getElementById('branches-grid').style.display = 'none';
+  document.getElementById('choose-title').style.display = 'none';
+  const section = document.getElementById('doctors-section');
+  section.classList.add('visible');
+
+  const names = { kiaka: 'Kiaka', nakivale: 'Nakivale', kiangwali: 'Kiangwali', kampala: 'Kampala' };
+  document.getElementById('branch-title').textContent = names[branch];
+
+  const list = document.getElementById('doctors-list');
+  list.innerHTML = '';
+  const t = translations[lang.current];
+
+  doctors[branch].forEach(doc => {
+    const statusLabel = doc.status === 'green' ? t.consult : doc.status === 'yellow' ? t.busy : t.absent;
+    const btnClass = doc.status === 'green' ? 'consult-btn' : 'consult-btn disabled';
+    const onclick = doc.status === 'green' ? `onclick="openWhatsApp('${doc.whatsapp}')"` : '';
+
+    list.innerHTML += `
+      <div class="doctor-card">
+        <div class="doctor-avatar">👨‍⚕️</div>
+        <div class="doctor-info">
+          <h3>${doc.name}</h3>
+          <p>${doc.specialty}</p>
+          <p class="langs">🌐 ${doc.langs}</p>
+        </div>
+        <div class="status-badge">
+          <div class="status-indicator ${doc.status}"></div>
+          <button class="${btnClass}" ${onclick}>${statusLabel}</button>
+        </div>
+      </div>
+    `;
+  });
+}
+
+function openWhatsApp(number) {
+  window.open(`https://wa.me/${number}`, '_blank');
+}
+
+function goBack() {
+  document.getElementById('branches-grid').style.display = 'grid';
+  document.getElementById('choose-title').style.display = 'block';
+  document.getElementById('doctors-section').classList.remove('visible');
+}
+
+function toggleLang() {
+  lang.current = lang.current === 'fr' ? 'en' : 'fr';
+  document.querySelector('.lang-btn').textContent = lang.current === 'fr' ? 'EN' : 'FR';
+  const t = translations[lang.current];
+  document.getElementById('title').textContent = t.title;
+  document.getElementById('subtitle').textContent = t.subtitle;
+  document.getElementById('s1').textContent = t.s1;
+  document.getElementById('s2').textContent = t.s2;
+  document.getElementById('s3').textContent = t.s3;
+  document.getElementById('choose-title').textContent = t.chooseTitle;
+  document.getElementById('back-text').textContent = t.backText;
+  document.getElementById('l1').textContent = t.l1;
+  document.getElementById('l2').textContent = t.l2;
+  document.getElementById('l3').textContent = t.l3;
+  document.getElementById('k-count').textContent = t.kCount;
+  document.getElementById('n-count').textContent = t.nCount;
+  document.getElementById('kg-count').textContent = t.kgCount;
+  document.getElementById('kp-count').textContent = t.kpCount;
+}
+
+countDocs();
+</script>
+</body>
+</html>
